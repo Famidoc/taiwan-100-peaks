@@ -55,6 +55,15 @@ function formatExcelDate(dateStr) {
   return dateStr.replace(/-/g, '/');
 }
 
+function fixImagePath(pathStr) {
+  if (!pathStr) return '';
+  // 將 /images/... 轉換為相對路徑 ./images/... 以適配 GitHub Pages 子目錄
+  if (pathStr.startsWith('/')) {
+    return '.' + pathStr;
+  }
+  return pathStr;
+}
+
 function adaptPeak(peak) {
   const details = peak.details || {};
   
@@ -94,8 +103,21 @@ function adaptPeak(peak) {
   
   const diary = getDetailsValue(details, ['心得', '登山隨筆', '感想', '備註', '攀登心得']) || '未填寫心得記錄。';
   
+  // 將所有圖片路徑轉換為相對路徑
+  const routeImage = peak.routeImage ? {
+    large: fixImagePath(peak.routeImage.large),
+    thumb: fixImagePath(peak.routeImage.thumb)
+  } : null;
+
+  const photos = (peak.photos || []).map(p => ({
+    large: fixImagePath(p.large),
+    thumb: fixImagePath(p.thumb)
+  }));
+
   return {
     ...peak,
+    routeImage,
+    photos,
     adapted: {
       date: dateFormatted,
       height: height.includes('m') ? height : `${height}m`,
@@ -111,7 +133,7 @@ function adaptPeak(peak) {
 // ==========================================================================
 async function initApp() {
   try {
-    const response = await fetch('/data/peaks.json');
+    const response = await fetch('./data/peaks.json');
     if (!response.ok) {
       throw new Error('無法讀取 peaks.json 資料');
     }
