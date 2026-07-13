@@ -470,7 +470,7 @@ function openModal(id) {
         const row = document.createElement('div');
         row.className = 'detail-row';
         row.innerHTML = `
-          <span class="detail-label">${key}</span>
+          <span class="detail-label">${key === '__EMPTY' ? '共遊者' : key}</span>
           <span class="detail-value">${peak.details[key]}</span>
         `;
         detailGrid.appendChild(row);
