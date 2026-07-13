@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小百岳搜奇--收齊小百岳 — 台灣小百岳完登紀念</title>
+    
+    <!-- Google Fonts: 引入宋體 (Noto Serif TC) 用於標題，黑體 (Noto Sans TC) 用於內文 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Noto+Serif+TC:wght@500;700;900&display=swap" rel="stylesheet">
+    
+    <!-- Leaflet.js CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  </head>
+  <body>
+    <div id="app">
+      <!-- 頂部精美導覽列 -->
+      <header class="main-header">
+        <div class="header-content">
+          <div class="logo-area">
+            <span class="mountain-icon">🏔️</span>
+            <h1>搜奇小百岳--小百岳收齊</h1>
+            <span class="sub-title">台灣小百岳完登紀念誌</span>
+          </div>
+          <div class="date-badge">2021.01.02 – 2023.04.07</div>
+        </div>
+      </header>
+
+      <!-- 主要佈局：地圖與統計資訊 -->
+      <section class="dashboard-section">
+        <div class="dashboard-container">
+          <!-- 統計與控制面板 -->
+          <div class="panel-left">
+            <div class="stats-card">
+              <h3>完登紀錄</h3>
+              <div class="stats-grid">
+                <div class="stat-item">
+                  <span class="stat-value">100</span>
+                  <span class="stat-label">小百岳總數</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-value highlight">100%</span>
+                  <span class="stat-label">完登進度</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-value" id="total-days">—</span>
+                  <span class="stat-label">歷時天數</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 搜尋與篩選器 -->
+            <div class="filter-card">
+              <div class="search-box">
+                <input type="text" id="search-input" placeholder="搜尋山名、地區或編號..." />
+                <span class="search-icon">🔍</span>
+              </div>
+              <div class="filter-group">
+                <div class="filter-item">
+                  <label for="region-filter">行政區域</label>
+                  <select id="region-filter">
+                    <option value="">全部地區</option>
+                  </select>
+                </div>
+                <div class="filter-item">
+                  <label for="difficulty-filter">難度評級</label>
+                  <select id="difficulty-filter">
+                    <option value="">全部難度</option>
+                    <option value="⭐">⭐ (輕鬆健行)</option>
+                    <option value="⭐⭐">⭐⭐ (稍具挑戰)</option>
+                    <option value="⭐⭐⭐">⭐⭐⭐ (具備挑戰)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 地圖展示區 -->
+          <div class="map-container">
+            <div id="map"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 下方視圖切換區 -->
+      <section class="content-section">
+        <div class="tabs-container">
+          <button class="tab-btn active" data-tab="grid-view">⛰️ 小百岳圖鑑</button>
+          <button class="tab-btn" data-tab="timeline-view">📅 完登時間軸</button>
+        </div>
+
+        <!-- 網格卡片視圖 -->
+        <div id="grid-view" class="tab-content active">
+          <div class="peaks-grid" id="peaks-grid-container">
+            <!-- 動態插入小百岳卡片 -->
+          </div>
+        </div>
+
+        <!-- 時間軸視圖 -->
+        <div id="timeline-view" class="tab-content">
+          <div class="timeline-container" id="timeline-container">
+            <!-- 動態插入時間軸節點 -->
+          </div>
+        </div>
+      </section>
+
+      <!-- 頁尾 -->
+      <footer class="main-footer">
+        <p>© 2026 搜奇小百岳--小百岳收齊 - 台灣小百岳完登紀念網頁. 陪伴您走過每一座山頭.</p>
+      </footer>
+
+      <!-- 詳細資訊 Modal 彈窗 -->
+      <div class="modal-overlay" id="detail-modal">
+        <div class="modal-card">
+          <button class="modal-close-btn" id="modal-close">×</button>
+          <div class="modal-body">
+            <!-- 左側：照片輪播與路線圖 -->
+            <div class="modal-media">
+              <div class="media-tabs">
+                <button class="media-tab-btn active" data-media="photos">🏔️ 完登紀實</button>
+                <button class="media-tab-btn" data-media="route">🗺️ 登山路線圖</button>
+              </div>
+              
+              <!-- 完登照片輪播 -->
+              <div class="carousel-container media-content active" id="carousel-photos">
+                <div class="carousel-track-wrapper">
+                  <div class="carousel-track" id="carousel-track">
+                    <!-- 動態載入照片 -->
+                  </div>
+                </div>
+                <button class="carousel-arrow prev" id="carousel-prev">‹</button>
+                <button class="carousel-arrow next" id="carousel-next">›</button>
+                <div class="carousel-dots" id="carousel-dots"></div>
+              </div>
+
+              <!-- 路線圖展示 -->
+              <div class="route-view-container media-content" id="route-photo-view">
+                <img id="modal-route-img" src="" alt="登山路線圖" />
+              </div>
+            </div>
+
+            <!-- 右側：詳細登山指標與心得 -->
+            <div class="modal-info">
+              <div class="modal-header-info">
+                <span class="peak-badge" id="modal-peak-id">No.000</span>
+                <h2 id="modal-peak-name">山岳名稱</h2>
+                <div class="meta-tags">
+                  <span class="tag-item" id="modal-peak-height">海拔高度</span>
+                  <span class="tag-item" id="modal-peak-area">行政區</span>
+                  <span class="tag-item" id="modal-peak-date">完登日期</span>
+                </div>
+              </div>
+              
+              <div class="detail-section">
+                <h4>攀登數據與指標</h4>
+                <div class="detail-grid" id="modal-detail-grid">
+                  <!-- 動態載入的 Excel 表格欄位 -->
+                </div>
+              </div>
+
+              <div class="diary-section">
+                <h4>登山隨筆與心得</h4>
+                <p id="modal-peak-diary">在這裡記錄完登當天的感動與回憶...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      <!-- 全螢幕照片放大 LightBox Overlay -->
+      <div class="lightbox-overlay" id="lightbox-modal">
+        <span class="lightbox-close" id="lightbox-close">&times;</span>
+        <img class="lightbox-content" id="lightbox-img" src="" alt="放大照片" />
+      </div>
+    </div>
+    
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
