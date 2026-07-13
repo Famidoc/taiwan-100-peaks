@@ -255,26 +255,15 @@ async function main() {
         console.warn(`⚠️ 警告: 未在地圖 KML 中找到與「${peakName}」完全匹配的點位，請確認地圖中是否有此標記。`);
       }
 
-      // 3. 匹配 Excel 中的數據。我們假設 Excel 中有類似「編號」或「山名」的欄位
-      // 我們會在轉換時列印出 Excel 的第一筆資料欄位，讓使用者了解匹配狀況
+      // 3. 匹配 Excel 中的數據。
+      // 使用者的資料夾前導三位數（如 093）代表的是其「完成順序」。
+      // 我們直接比對 Excel 中的「完成順序」欄位進行精確對齊，保證數據 100% 精準匹配。
       const matchedExcelRow = excelData.find(row => {
-        // 檢查是否有欄位值與編號匹配
-        const keys = Object.keys(row);
-        
-        // 檢查是否有欄位值與編號匹配
-        const idMatch = keys.some(key => {
-          const val = String(row[key]).trim();
-          // 去除前導零進行比較，例如 "001" 與 "1"
-          return parseInt(val) === parseInt(peakId);
-        });
-
-        // 或者是名稱匹配
-        const nameMatch = keys.some(key => {
-          const val = String(row[key]).trim();
-          return val.includes(peakName) || peakName.includes(val);
-        });
-
-        return idMatch || nameMatch;
+        if (row['完成順序']) {
+          const excelOrderStr = String(row['完成順序']).trim();
+          return parseInt(excelOrderStr) === parseInt(peakId);
+        }
+        return false;
       }) || {};
 
       finalPeaks.push({
