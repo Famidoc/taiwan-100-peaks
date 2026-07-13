@@ -54,6 +54,19 @@
               </div>
             </div>
 
+            <!-- 心得備份與同步卡片 -->
+            <div class="stats-card backup-card" style="margin-top: 1.5rem;">
+              <h3>💾 心得備份與同步</h3>
+              <p style="font-size: 0.85rem; color: var(--color-wood-mid); margin-bottom: 1rem; line-height: 1.4;">
+                手動打字的心得儲存在本機。您可使用下方按鈕進行備份，或將檔案傳至電腦版/手機版進行同步。
+              </p>
+              <div class="backup-actions" style="display: flex; gap: 0.75rem; width: 100%;">
+                <button id="export-diaries-btn" class="backup-btn" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 0.25rem;">📥 匯出</button>
+                <button id="import-diaries-btn" class="backup-btn" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 0.25rem;">📤 匯入</button>
+                <input type="file" id="import-file-input" accept=".json" style="display: none;" />
+              </div>
+            </div>
+
             <!-- 搜尋與篩選器 -->
             <div class="filter-card">
               <div class="search-box">
@@ -164,8 +177,20 @@
               </div>
 
               <div class="diary-section">
-                <h4>登山隨筆與心得</h4>
-                <p id="modal-peak-diary">在這裡記錄完登當天的感動與回憶...</p>
+                <div class="section-title-row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                  <h4 style="margin: 0;">登山隨筆與心得</h4>
+                  <button id="modal-edit-diary-btn" class="edit-btn">📝 編輯心得</button>
+                </div>
+                <div id="modal-diary-display-area">
+                  <p id="modal-peak-diary" style="line-height: 1.6; white-space: pre-wrap; margin: 0; color: var(--color-wood-dark);">在這裡記錄完登當天的感動與回憶...</p>
+                </div>
+                <div id="modal-diary-edit-area" style="display: none;">
+                  <textarea id="modal-diary-textarea" rows="5" style="width: 100%; box-sizing: border-box; padding: 0.75rem; border: 1px solid var(--color-wood-mid); border-radius: 6px; font-family: inherit; font-size: 0.95rem; line-height: 1.5; margin-bottom: 0.75rem; resize: vertical;" placeholder="在這裡記錄您完登當天的感想、天氣、共遊夥伴或是攀登心得..."></textarea>
+                  <div class="edit-actions" style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+                    <button id="modal-save-diary-btn" class="btn btn-save" style="background-color: var(--color-forest); color: white; border: none; padding: 0.4rem 0.9rem; border-radius: 4px; font-size: 0.9rem; cursor: pointer;">💾 儲存</button>
+                    <button id="modal-cancel-diary-btn" class="btn btn-cancel" style="background-color: #eee; color: #333; border: none; padding: 0.4rem 0.9rem; border-radius: 4px; font-size: 0.9rem; cursor: pointer;">❌ 取消</button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

@@ -363,6 +363,10 @@ function renderGrid() {
     // 首圖 (登山路線圖) 縮圖 URL，若無照片則顯示預設圖片
     const thumbUrl = peak.routeImage ? peak.routeImage.thumb : 'https://picsum.photos/id/1015/400/300';
 
+    // 優先讀取本機心得預覽
+    const savedDiary = localStorage.getItem(`peak-diary-${peak.id}`);
+    const currentDiary = savedDiary !== null ? savedDiary : peak.adapted.diary;
+
     card.innerHTML = `
       <div class="card-img-container">
         <img src="${thumbUrl}" alt="${peak.name} 路線圖" loading="lazy" />
@@ -378,7 +382,7 @@ function renderGrid() {
           <span class="tag-item">${peak.adapted.height}</span>
           <span class="tag-item">${peak.adapted.region.split('區')[0]}</span>
         </div>
-        <p class="card-diary-preview">${peak.adapted.diary}</p>
+        <p class="card-diary-preview">${currentDiary}</p>
       </div>
     `;
 
@@ -453,7 +457,52 @@ function openModal(id) {
   document.getElementById('modal-peak-height').textContent = `海拔高度：${peak.adapted.height}`;
   document.getElementById('modal-peak-area').textContent = `行政區：${peak.adapted.region}`;
   document.getElementById('modal-peak-date').textContent = `完登日期：${peak.adapted.date}`;
-  document.getElementById('modal-peak-diary').textContent = peak.adapted.diary;
+  
+  // 優先讀取本機心得，若無則顯示 Excel 心得
+  const savedDiary = localStorage.getItem(`peak-diary-${peak.id}`);
+  const currentDiary = savedDiary !== null ? savedDiary : peak.adapted.diary;
+  document.getElementById('modal-peak-diary').textContent = currentDiary;
+
+  // 註冊心得編輯區塊事件
+  const editBtn = document.getElementById('modal-edit-diary-btn');
+  const displayArea = document.getElementById('modal-diary-display-area');
+  const editArea = document.getElementById('modal-diary-edit-area');
+  const textarea = document.getElementById('modal-diary-textarea');
+  const saveBtn = document.getElementById('modal-save-diary-btn');
+  const cancelBtn = document.getElementById('modal-cancel-diary-btn');
+
+  displayArea.style.display = 'block';
+  editArea.style.display = 'none';
+
+  editBtn.onclick = () => {
+    const savedDiaryLatest = localStorage.getItem(`peak-diary-${peak.id}`);
+    textarea.value = savedDiaryLatest !== null ? savedDiaryLatest : (peak.adapted.diary === '未填寫心得記錄。' ? '' : peak.adapted.diary);
+    displayArea.style.display = 'none';
+    editArea.style.display = 'block';
+    textarea.focus();
+  };
+
+  saveBtn.onclick = () => {
+    const newText = textarea.value.trim();
+    if (newText === '') {
+      localStorage.removeItem(`peak-diary-${peak.id}`);
+    } else {
+      localStorage.setItem(`peak-diary-${peak.id}`, newText);
+    }
+    const displayDiary = newText === '' ? (peak.adapted.diary || '未填寫心得記錄。') : newText;
+    document.getElementById('modal-peak-diary').textContent = displayDiary;
+    
+    // 更新首頁卡片的心得預覽
+    renderGrid();
+    
+    displayArea.style.display = 'block';
+    editArea.style.display = 'none';
+  };
+
+  cancelBtn.onclick = () => {
+    displayArea.style.display = 'block';
+    editArea.style.display = 'none';
+  };
 
   // 2. 渲染 Excel 完整欄位資料
   const detailGrid = document.getElementById('modal-detail-grid');
@@ -676,6 +725,66 @@ function setupEventListeners() {
     if (e.target.id === 'lightbox-modal') {
       closeLightbox();
     }
+  });
+
+  // 7. 心得匯出與匯入同步事件
+  document.getElementById('export-diaries-btn').addEventListener('click', () => {
+    const diaries = {};
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key.startsWith('peak-diary-')) {
+        const peakId = key.replace('peak-diary-', '');
+        diaries[peakId] = localStorage.getItem(key);
+      }
+    }
+    
+    if (Object.keys(diaries).length === 0) {
+      alert('您的本機目前尚未記錄任何手寫心得，無需備份！');
+      return;
+    }
+    
+    const dataStr = JSON.stringify(diaries, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'taiwan-100-peaks-diaries.json';
+    link.click();
+    
+    URL.revokeObjectURL(url);
+  });
+
+  const fileInput = document.getElementById('import-file-input');
+  document.getElementById('import-diaries-btn').addEventListener('click', () => {
+    fileInput.click();
+  });
+
+  fileInput.addEventListener('change', (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const diaries = JSON.parse(e.target.result);
+        let importCount = 0;
+        
+        Object.keys(diaries).forEach(peakId => {
+          localStorage.setItem(`peak-diary-${peakId}`, diaries[peakId]);
+          importCount++;
+        });
+        
+        alert(`🎉 成功匯入 ${importCount} 筆登山隨筆與心得！`);
+        renderGrid(); // 重新渲染卡片
+        
+        fileInput.value = '';
+      } catch (err) {
+        alert('❌ 匯入失敗！請確認所選擇的檔案是正確的 JSON 心得備份檔。');
+        console.error(err);
+      }
+    };
+    reader.readAsText(file);
   });
 }
 

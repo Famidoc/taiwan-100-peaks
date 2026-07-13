@@ -1112,3 +1112,49 @@ body {
 #modal-route-img:hover {
   opacity: 0.95;
 }
+
+/* ==========================================================================
+   PWA 心得編輯與備份樣式
+   ========================================================================== */
+.edit-btn {
+  background: none;
+  border: 1px solid var(--color-forest);
+  color: var(--color-forest);
+  padding: 0.25rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+}
+
+.edit-btn:hover {
+  background-color: var(--color-forest);
+  color: white;
+}
+
+.backup-btn {
+  background-color: transparent;
+  border: 1px solid var(--color-forest);
+  color: var(--color-forest);
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+}
+
+.backup-btn:hover {
+  background-color: var(--color-forest);
+  color: white;
+}
+
+.btn-save:hover {
+  background-color: var(--color-forest-dark) !important;
+}
+
+.btn-cancel:hover {
+  background-color: #ddd !important;
+}
+
