@@ -1,0 +1,36 @@
+{
+  "name": "搜奇小百岳--小百岳收齊",
+  "short_name": "小百岳搜奇",
+  "description": "台灣小百岳完登紀念誌",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#e2ebdc",
+  "theme_color": "#2c5e3b",
+  "icons": [
+    {
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

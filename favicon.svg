@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- 背景溫暖綠色圓圈 -->
+  <circle cx="50" cy="50" r="46" fill="#e2ebdc" />
+  <!-- 遠山 (莫蘭迪深綠) -->
+  <polygon points="18,72 48,25 78,72" fill="#2c5e3b" />
+  <!-- 近山 (莫蘭迪草綠) -->
+  <polygon points="38,72 65,38 92,72" fill="#4f8f58" />
+  <!-- 溫暖的晨曦太陽 -->
+  <circle cx="72" cy="30" r="8" fill="#e89f47" />
+  <!-- 山下地平線 -->
+  <rect x="15" y="70" width="70" height="4" rx="2" fill="#2c5e3b" />
+</svg>
