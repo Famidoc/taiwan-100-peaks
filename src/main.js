@@ -16,6 +16,8 @@ let map = null;
 let markers = [];
 let currentCarouselIndex = 0;
 let carouselPhotos = [];
+let lightboxImages = [];
+let currentLightboxIndex = 0;
 
 // ==========================================================================
 // 數據適配器 (適配用戶自訂的 Excel 欄位)
@@ -101,7 +103,8 @@ function adaptPeak(peak) {
     }
   }
   
-  const diary = getDetailsValue(details, ['心得', '登山隨筆', '感想', '備註', '攀登心得']) || '未填寫心得記錄。';
+  const diary = getDetailsValue(details, ['心得', '登山隨筆', '感想', '備註', '攀登心得', '隨筆']) || '';
+  const partners = getDetailsValue(details, ['共遊者', '隊友', '夥伴', '同行者', '共遊夥伴', '共遊']) || '';
   
   // 將所有圖片路徑轉換為相對路徑
   const routeImage = peak.routeImage ? {
@@ -123,7 +126,8 @@ function adaptPeak(peak) {
       height: height.includes('m') ? height : `${height}m`,
       region,
       difficulty,
-      diary
+      diary,
+      partners
     }
   };
 }
@@ -312,12 +316,14 @@ function filterPeaks() {
   const difficultyVal = document.getElementById('difficulty-filter').value;
 
   filteredPeaks = peaksData.filter(peak => {
-    // 1. 搜尋文字篩選 (山名、編號、或行政區)
+    // 1. 搜尋文字篩選 (山名、編號、行政區、共遊者、或心得隨筆)
     const matchesSearch = 
       peak.name.toLowerCase().includes(searchQuery) ||
       peak.id.includes(searchQuery) ||
       parseInt(peak.id) === parseInt(searchQuery) ||
-      peak.adapted.region.toLowerCase().includes(searchQuery);
+      peak.adapted.region.toLowerCase().includes(searchQuery) ||
+      (peak.adapted.partners && peak.adapted.partners.toLowerCase().includes(searchQuery)) ||
+      (peak.adapted.diary && peak.adapted.diary.toLowerCase().includes(searchQuery));
 
     // 2. 行政區篩選
     const matchesRegion = !regionVal || peak.adapted.region.includes(regionVal);
@@ -338,6 +344,12 @@ function filterPeaks() {
 function renderViews() {
   renderGrid();
   renderTimeline();
+
+  // 更新搜尋結果筆數
+  const countEl = document.getElementById('search-results-count');
+  if (countEl) {
+    countEl.textContent = filteredPeaks.length;
+  }
 }
 
 // 渲染小百岳圖鑑 (Grid)
@@ -458,51 +470,23 @@ function openModal(id) {
   document.getElementById('modal-peak-area').textContent = `行政區：${peak.adapted.region}`;
   document.getElementById('modal-peak-date').textContent = `完登日期：${peak.adapted.date}`;
   
-  // 優先讀取本機心得，若無則顯示 Excel 心得
-  const savedDiary = localStorage.getItem(`peak-diary-${peak.id}`);
-  const currentDiary = savedDiary !== null ? savedDiary : peak.adapted.diary;
-  document.getElementById('modal-peak-diary').textContent = currentDiary;
+  // 顯示共遊夥伴
+  const partnersEl = document.getElementById('modal-peak-partners');
+  if (peak.adapted.partners && peak.adapted.partners.trim() !== '') {
+    partnersEl.textContent = `👥 共遊者：${peak.adapted.partners}`;
+    partnersEl.style.display = 'inline-block';
+  } else {
+    partnersEl.style.display = 'none';
+  }
 
-  // 註冊心得編輯區塊事件
-  const editBtn = document.getElementById('modal-edit-diary-btn');
-  const displayArea = document.getElementById('modal-diary-display-area');
-  const editArea = document.getElementById('modal-diary-edit-area');
-  const textarea = document.getElementById('modal-diary-textarea');
-  const saveBtn = document.getElementById('modal-save-diary-btn');
-  const cancelBtn = document.getElementById('modal-cancel-diary-btn');
-
-  displayArea.style.display = 'block';
-  editArea.style.display = 'none';
-
-  editBtn.onclick = () => {
-    const savedDiaryLatest = localStorage.getItem(`peak-diary-${peak.id}`);
-    textarea.value = savedDiaryLatest !== null ? savedDiaryLatest : (peak.adapted.diary === '未填寫心得記錄。' ? '' : peak.adapted.diary);
-    displayArea.style.display = 'none';
-    editArea.style.display = 'block';
-    textarea.focus();
-  };
-
-  saveBtn.onclick = () => {
-    const newText = textarea.value.trim();
-    if (newText === '') {
-      localStorage.removeItem(`peak-diary-${peak.id}`);
-    } else {
-      localStorage.setItem(`peak-diary-${peak.id}`, newText);
-    }
-    const displayDiary = newText === '' ? (peak.adapted.diary || '未填寫心得記錄。') : newText;
-    document.getElementById('modal-peak-diary').textContent = displayDiary;
-    
-    // 更新首頁卡片的心得預覽
-    renderGrid();
-    
-    displayArea.style.display = 'block';
-    editArea.style.display = 'none';
-  };
-
-  cancelBtn.onclick = () => {
-    displayArea.style.display = 'block';
-    editArea.style.display = 'none';
-  };
+  // 唯讀呈現隨筆，若無心得則隱藏區塊
+  const diarySection = document.querySelector('.diary-section');
+  if (peak.adapted.diary && peak.adapted.diary.trim() !== '' && peak.adapted.diary !== '未填寫心得記錄。') {
+    document.getElementById('modal-peak-diary').textContent = peak.adapted.diary;
+    diarySection.style.display = 'block';
+  } else {
+    diarySection.style.display = 'none';
+  }
 
   // 2. 渲染 Excel 完整欄位資料
   const detailGrid = document.getElementById('modal-detail-grid');
@@ -510,8 +494,8 @@ function openModal(id) {
   
   if (peak.details) {
     Object.keys(peak.details).forEach(key => {
-      // 排除掉已經在 Header 顯示過的欄位，以保持版面乾淨
-      const isHeaderField = ['編號', '山名', '完登日期', '海拔高度', '高度', '行政區域', '行政區', '縣市', '心得', '隨筆', '難度'].some(hk => 
+      // 排除掉已經在 Header 顯示過的欄位，以保持版面乾淨（包含共遊、隨筆）
+      const isHeaderField = ['編號', '山名', '完登日期', '海拔高度', '高度', '行政區域', '行政區', '縣市', '心得', '隨筆', '難度', '共遊', '夥伴', '隊友'].some(hk => 
         key.includes(hk)
       );
 
@@ -680,7 +664,7 @@ function setupEventListeners() {
     }
   });
   
-  // 支援 ESC 鍵關閉 Modal 與 LightBox
+  // 支援 ESC 鍵與左右方向鍵切換 LightBox
   window.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       const lightbox = document.getElementById('lightbox-modal');
@@ -688,6 +672,16 @@ function setupEventListeners() {
         closeLightbox();
       } else {
         closeModal();
+      }
+    } else if (e.key === 'ArrowLeft') {
+      const lightbox = document.getElementById('lightbox-modal');
+      if (lightbox && lightbox.classList.contains('active')) {
+        navigateLightbox(-1);
+      }
+    } else if (e.key === 'ArrowRight') {
+      const lightbox = document.getElementById('lightbox-modal');
+      if (lightbox && lightbox.classList.contains('active')) {
+        navigateLightbox(1);
       }
     }
   });
@@ -710,92 +704,73 @@ function setupEventListeners() {
   // 6. LightBox 全螢幕相片放大事件
   document.getElementById('carousel-track').addEventListener('click', (e) => {
     if (e.target.tagName === 'IMG') {
-      openLightbox(e.target.src);
+      const srcList = carouselPhotos.length > 0 ? carouselPhotos.map(p => p.large) : [document.getElementById('modal-route-img').src];
+      openLightbox(srcList, carouselPhotos.length > 0 ? currentCarouselIndex : 0);
     }
   });
 
   document.getElementById('modal-route-img').addEventListener('click', (e) => {
     if (e.target.src) {
-      openLightbox(e.target.src);
+      openLightbox([e.target.src], 0);
     }
   });
 
   document.getElementById('lightbox-close').addEventListener('click', closeLightbox);
+  
+  // 註冊左右箭頭事件
+  document.getElementById('lightbox-prev').addEventListener('click', (e) => {
+    e.stopPropagation();
+    navigateLightbox(-1);
+  });
+  document.getElementById('lightbox-next').addEventListener('click', (e) => {
+    e.stopPropagation();
+    navigateLightbox(1);
+  });
+
   document.getElementById('lightbox-modal').addEventListener('click', (e) => {
     if (e.target.id === 'lightbox-modal') {
       closeLightbox();
     }
   });
 
-  // 7. 心得匯出與匯入同步事件
-  document.getElementById('export-diaries-btn').addEventListener('click', () => {
-    const diaries = {};
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key.startsWith('peak-diary-')) {
-        const peakId = key.replace('peak-diary-', '');
-        diaries[peakId] = localStorage.getItem(key);
-      }
-    }
-    
-    if (Object.keys(diaries).length === 0) {
-      alert('您的本機目前尚未記錄任何手寫心得，無需備份！');
-      return;
-    }
-    
-    const dataStr = JSON.stringify(diaries, null, 2);
-    const blob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'taiwan-100-peaks-diaries.json';
-    link.click();
-    
-    URL.revokeObjectURL(url);
-  });
 
-  const fileInput = document.getElementById('import-file-input');
-  document.getElementById('import-diaries-btn').addEventListener('click', () => {
-    fileInput.click();
-  });
-
-  fileInput.addEventListener('change', (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
-    
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const diaries = JSON.parse(e.target.result);
-        let importCount = 0;
-        
-        Object.keys(diaries).forEach(peakId => {
-          localStorage.setItem(`peak-diary-${peakId}`, diaries[peakId]);
-          importCount++;
-        });
-        
-        alert(`🎉 成功匯入 ${importCount} 筆登山隨筆與心得！`);
-        renderGrid(); // 重新渲染卡片
-        
-        fileInput.value = '';
-      } catch (err) {
-        alert('❌ 匯入失敗！請確認所選擇的檔案是正確的 JSON 心得備份檔。');
-        console.error(err);
-      }
-    };
-    reader.readAsText(file);
-  });
 }
 
 // ==========================================================================
 // 全螢幕放大 LightBox 模組
 // ==========================================================================
-function openLightbox(imgSrc) {
+function openLightbox(images, startIndex) {
+  lightboxImages = images.map(img => fixImagePath(img));
+  currentLightboxIndex = startIndex;
+
   const lightbox = document.getElementById('lightbox-modal');
-  const lightboxImg = document.getElementById('lightbox-img');
-  lightboxImg.src = imgSrc;
+  const prevBtn = document.getElementById('lightbox-prev');
+  const nextBtn = document.getElementById('lightbox-next');
+
+  updateLightboxImage();
+
+  if (lightboxImages.length <= 1) {
+    prevBtn.style.display = 'none';
+    nextBtn.style.display = 'none';
+  } else {
+    prevBtn.style.display = 'block';
+    nextBtn.style.display = 'block';
+  }
+
   lightbox.classList.add('active');
+}
+
+function updateLightboxImage() {
+  const lightboxImg = document.getElementById('lightbox-img');
+  if (lightboxImages[currentLightboxIndex]) {
+    lightboxImg.src = lightboxImages[currentLightboxIndex];
+  }
+}
+
+function navigateLightbox(dir) {
+  if (lightboxImages.length <= 1) return;
+  currentLightboxIndex = (currentLightboxIndex + dir + lightboxImages.length) % lightboxImages.length;
+  updateLightboxImage();
 }
 
 function closeLightbox() {

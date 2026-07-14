@@ -688,9 +688,9 @@ body {
 
 .modal-card {
   background-color: var(--color-beige-card);
-  width: 90%;
-  max-width: 960px;
-  height: 80vh;
+  width: 95%;
+  max-width: 1080px;
+  height: 85vh;
   border-radius: var(--radius-lg);
   border: 1px solid var(--color-border);
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
@@ -731,7 +731,7 @@ body {
 /* Modal 內部雙欄佈局 */
 .modal-body {
   display: grid;
-  grid-template-columns: 1.1fr 1fr;
+  grid-template-columns: 1.3fr 1fr;
   height: 100%;
 }
 
@@ -1099,6 +1099,56 @@ body {
 
 .lightbox-overlay.active .lightbox-content {
   transform: scale(1);
+}
+
+/* LightBox 左右切換箭頭 */
+.lightbox-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.3);
+  color: #FFFFFF;
+  border: none;
+  font-size: 3.5rem;
+  width: 4.5rem;
+  height: 4.5rem;
+  border-radius: 50%;
+  cursor: pointer;
+  z-index: 2010;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition-smooth);
+  user-select: none;
+}
+
+.lightbox-arrow:hover {
+  background: rgba(0, 0, 0, 0.6);
+  color: var(--color-accent-gold);
+  transform: translateY(-50%) scale(1.1);
+}
+
+.lightbox-arrow.prev {
+  left: 2.5rem;
+}
+
+.lightbox-arrow.next {
+  right: 2.5rem;
+}
+
+/* 響應式小螢幕箭頭調整 */
+@media (max-width: 768px) {
+  .lightbox-arrow {
+    width: 3.2rem;
+    height: 3.2rem;
+    font-size: 2.5rem;
+  }
+  .lightbox-arrow.prev {
+    left: 0.8rem;
+  }
+  .lightbox-arrow.next {
+    right: 0.8rem;
+  }
 }
 
 /* 加上手勢放大游標 */
